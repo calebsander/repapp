@@ -3,6 +3,10 @@ logs
 *.log
 npm-debug.log*
 
+# Directories
+.DS_Store
+public/dist/
+
 # Runtime data
 pids
 *.pid
