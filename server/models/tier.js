@@ -5,14 +5,14 @@ module.exports = function(sequelize, DataTypes) {
     // let fewer colleges in. College tier must be <= date tier
     // to sign up.
     priority: {
-        type: DataTypes.INTEGER,
-        primaryKey: true
+      type: DataTypes.INTEGER,
+      primaryKey: true
     },
     // e.g. "Unavailable", "Available if necessary", "Available"
     // In link UI, we can ask: "Allow rep to sign up for slots labeled: ..."
     description: DataTypes.STRING
   })
-  
+
   // Finally, return the model
   return Tier
 }

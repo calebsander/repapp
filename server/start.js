@@ -7,5 +7,5 @@ const app = require('./app')
 const models = require('./models')
 
 models.sequelize.sync().then(function() {
-    app.listen(8000)
+  app.listen(8000)
 })
