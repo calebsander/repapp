@@ -4,8 +4,8 @@
  */
 
 const app = require('./app')
-const models = require('./models')
+const database = require('./database')
 
-models.sequelize.sync().then(function() {
+database.sequelize.sync().then(function() {
   app.listen(8000)
 })
