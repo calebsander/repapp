@@ -1,4 +1,4 @@
-module.exports = function(sequelize, DataTypes) {
+module.exports = (sequelize, DataTypes) => {
   const Link = sequelize.define('link', {
     college: {
       type: DataTypes.STRING,
@@ -16,11 +16,12 @@ module.exports = function(sequelize, DataTypes) {
     notesFromCollegeSeen: DataTypes.BOOLEAN,
     lastSignedIn: DataTypes.DATE,
     repName: DataTypes.STRING
-  }, {
+  },
+  {
     classMethods: {
-      associate: function(models) {
+      associate({tier}) {
         // adds a tierPriority field to links table
-        Link.belongsTo(models.tier)
+        Link.belongsTo(tier)
       }
     }
   })

@@ -1,5 +1,5 @@
-module.exports = function(sequelize, DataTypes) {
-  const Tier = sequelize.define('tier', {
+module.exports = (sequelize, DataTypes) =>
+  sequelize.define('tier', {
     // Lower is more important. Colleges with lower tiers
     // have access to more dates; dates with lower tiers
     // let fewer colleges in. College tier must be <= date tier
@@ -12,7 +12,3 @@ module.exports = function(sequelize, DataTypes) {
     // In link UI, we can ask: "Allow rep to sign up for slots labeled: ..."
     description: DataTypes.STRING
   })
-
-  // Finally, return the model
-  return Tier
-}
