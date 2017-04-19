@@ -1,28 +1,47 @@
-module.exports = (sequelize, Sequelize) =>
+const passwordHash = require('password-hash-and-salt')
+
+function hashPassword(admin) {
+  if (!admin.changed('password')) return
+  return new Promise((resolve, reject) => {
+    passwordHash(admin.password).hash((err, hash) => {
+      if (err) reject(err)
+      else resolve(hash)
+    })
+  })
+    .then(hash => admin.passwordHash = hash)
+}
+
+module.exports = (sequelize, DataTypes) =>
   sequelize.define('admin', {
     email: {
-      type: Sequelize.STRING,
+      type: DataTypes.STRING,
       allowNull: false,
       primaryKey: true
     },
+    password: DataTypes.VIRTUAL,
     passwordHash: {
-      type: Sequelize.STRING,
+      type: DataTypes.STRING(270),
       allowNull: false
     },
     emailOnPeriodChoice: {
-      type: Sequelize.BOOLEAN,
+      type: DataTypes.BOOLEAN,
       allowNull: false
     },
     emailOnCancellation: {
-      type: Sequelize.BOOLEAN,
+      type: DataTypes.BOOLEAN,
       allowNull: false
     },
     emailOnNoteChange: {
-      type: Sequelize.BOOLEAN,
+      type: DataTypes.BOOLEAN,
       allowNull: false
     },
     emailDailyDigest: {
-      type: Sequelize.BOOLEAN,
+      type: DataTypes.BOOLEAN,
       allowNull: false
+    }
+  },
+  {
+    hooks: {
+      beforeValidate: hashPassword
     }
   })
