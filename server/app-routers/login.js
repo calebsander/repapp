@@ -1,5 +1,4 @@
 const Admin = require('../database').admin
-const bodyParser = require('body-parser')
 const express = require('express')
 const passwordHash = require('password-hash-and-salt')
 const restrictToLoggedIn = require('../restrict-to-logged-in')
@@ -24,7 +23,6 @@ function authenticate(email, password) {
 
 const router = express.Router()
 router.post('/',
-  bodyParser.json(),
   validatePostParams({
     email: String,
     password: String
