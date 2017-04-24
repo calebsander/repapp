@@ -1,0 +1,55 @@
+<html>
+  <head>
+    <script src = 'https://code.jquery.com/jquery-3.2.1.min.js'></script>
+    <script>
+      $(document).ready(() => {
+        const loginSuccess = $('div#login-success')
+        const loginError = $('div#login-error')
+        $('button#login').click(() => {
+          $.ajax({
+            url: '/api/login',
+            type: 'POST',
+            headers: {
+              'content-type': 'application/json'
+            },
+            data: JSON.stringify({
+              email: $('input#email').val(),
+              password: $('input#password').val()
+            }),
+            dataType: 'json',
+            success(response) {
+              if (response.success) {
+                loginSuccess.show()
+                setTimeout(() => loginSuccess.hide(), 1000)
+              }
+              else {
+                loginError.text(response.message)
+                loginError.show()
+                setTimeout(() => loginError.hide(), 1000)
+              }
+            }
+          })
+        })
+        $('button#restricted').click(() => {
+          $.ajax({
+            url: '/api/restricted',
+            dataType: 'text',
+            success(response) {
+              alert(response)
+            }
+          })
+        })
+      })
+    </script>
+  </head>
+  <body>
+    <input id = 'email' placeholder = 'tpaul@commschool.org' />
+    <input type = 'password' id = 'password' placeholder = 'password' />
+    <button id = 'login'>Login</button>
+    <div id = 'login-success' style = 'color:green;display:none;'>Login success</div>
+    <div id = 'login-error' style = 'color:red;display:none;'></div>
+    <br />
+    <br />
+    <button id = 'restricted'>Access restricted content</button>
+  </body>
+</html>
