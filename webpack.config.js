@@ -1,12 +1,15 @@
-var path = require('path')
-var webpack = require('webpack')
+const path = require('path')
+const webpack = require('webpack')
 
 module.exports = {
-  entry: './frontend/main.js',
+  entry: {
+    admin: './frontend/admin-main.js',
+    link: './frontend/link-main.js'
+  },
   output: {
-    path: path.resolve(__dirname, './public/dist'),
+    path: path.join(__dirname, 'public/dist'),
     publicPath: '/dist/',
-    filename: 'build.js'
+    filename: '[name]-build.js'
   },
   module: {
     rules: [
@@ -23,6 +26,10 @@ module.exports = {
           }
           // other vue-loader options go here
         }
+      },
+      {
+        test: /\.css$/,
+        loader: 'vue-style-loader!css-loader'
       },
       {
         test: /\.js$/,

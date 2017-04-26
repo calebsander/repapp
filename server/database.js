@@ -3,7 +3,7 @@ const path = require('path')
 const Sequelize = require('sequelize')
 const env = process.env.NODE_ENV || 'development'
 const config = require('./config/config')[env]
-const sequelize = new Sequelize(config.uri)
+const sequelize = new Sequelize(config.uri, {timezone: 'America/New_York'})
 
 const db = {sequelize, Sequelize}
 const modelsToAssociate = new Set
