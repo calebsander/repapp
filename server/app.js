@@ -7,6 +7,7 @@ const path = require('path')
 const apiRouter = require('./app-routers/api')
 
 const app = express()
+const restrictToLoggedIn = require('./restrict-to-logged-in')
 
 app.use(session({
   secret: crypto.randomBytes(64).toString('hex'),
@@ -19,11 +20,13 @@ app.use(session({
 app.use(express.static('public'))
 
 app.use('/api', apiRouter)
+
 app.use('/admin', (req, res) => {
   res.sendFile(path.join(__dirname, '../public/admin.html'))
 })
 app.use('/:linkId', (req, res) => {
   res.sendFile(path.join(__dirname, '../public/link.html'))
 })
+
 
 module.exports = app

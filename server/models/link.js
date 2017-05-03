@@ -10,7 +10,7 @@ module.exports = (sequelize, DataTypes) => {
       defaultValue: DataTypes.UUIDV4,
       allowNull: false
     },
-    scheduledTime: DataTypes.RANGE(DataTypes.DATE),
+    scheduledDate: DataTypes.DATEONLY,
     notesToCollege: DataTypes.TEXT,
     notesFromCollege: DataTypes.TEXT,
     notesFromCollegeSeen: DataTypes.BOOLEAN,
@@ -19,9 +19,9 @@ module.exports = (sequelize, DataTypes) => {
   },
   {
     classMethods: {
-      associate({tier}) {
-        // adds a tierPriority field to links table
-        Link.belongsTo(tier)
+      associate: function(models) {
+        Link.belongsTo(models.tier)
+        Link.belongsTo(models.period)
       }
     }
   })
