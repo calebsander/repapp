@@ -19,9 +19,9 @@ module.exports = (sequelize, DataTypes) => {
   },
   {
     classMethods: {
-      associate: function(models) {
-        Link.belongsTo(models.tier)
-        Link.belongsTo(models.period)
+      associate({tier, period}) {
+        Link.belongsTo(tier)
+        Link.belongsTo(period)
       }
     }
   })
