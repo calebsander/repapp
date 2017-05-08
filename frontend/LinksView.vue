@@ -11,6 +11,7 @@
           <md-table-head>Link</md-table-head>
           <md-table-head>Status</md-table-head>
           <md-table-head>Notes</md-table-head>
+          <md-table-head>Delete</md-table-head>
         </md-table-row>
       </md-table-header>
 
@@ -25,19 +26,19 @@
             </span>
           </md-table-cell>
           <md-table-cell>
-            <a v-bind:href="link.url">
+            <a :href="link.url">
               {{ link.uuid }}
             </a>
           </md-table-cell>
           <md-table-cell>
-            <span v-if="link.scheduledTime">
+            <span v-if="link.scheduledDate">
               Scheduled for
-              {{ link.scheduledTime[0].getMonth() + 1 }}/{{ link.scheduledTime[0].getDate() }}
+              {{ link.scheduledDate.toMMDD() }}
             </span>
             <span v-else>
               <span v-if="link.lastSignedIn">
                 Last signed in on
-                {{ link.lastSignedIn.getMonth() + 1 }}/{{ link.lastSignedIn.getDate() }}
+                {{ link.lastSignedIn.toMMDD() }}
               </span>
               <span v-else>
                 Never logged in
@@ -50,6 +51,9 @@
             </span>
             <md-icon>message</md-icon>
           </md-table-cell>
+          <md-table-cell>
+            <md-icon @click.native="deleteLink(index)">delete</md-icon>
+          </md-table-cell>
         </md-table-row>
       </md-table-body>
     </md-table>
@@ -57,7 +61,7 @@
     <md-dialog-alert :md-content='selectedNotes' md-ok-text="Close" ref="notesDialog">
     </md-dialog-alert>
 
-    <md-dialog md-open-from="#new-link" md-close-to="#new-link" ref='linkForm'>
+    <md-dialog md-open-from="#new-link" md-close-to="#new-link" ref="linkForm">
       <md-dialog-title>Create new link</md-dialog-title>
       <md-dialog-content>
         <form>
@@ -89,20 +93,28 @@
         <md-button class="md-primary" @click.native="createLink">Create</md-button>
       </md-dialog-actions>
     </md-dialog>
+    <md-dialog-alert ref="creationError" md-title="Error creating link" :md-content="linkForm.error"></md-dialog-alert>
   </div>
 </template>
 
 <script>
+  Date.prototype.toMMDD = function() {
+    return String(this.getMonth() + 1) + '/' + String(this.getDate())
+  }
+  function parseDate(date) {
+    if (date === null) return null
+    return new Date(date)
+  }
   const MAX_NOTES_LENGTH = 40
   const ELLIPSIS = '...'
   class Link {
-    constructor({college, repName, uuid, lastSignedIn, scheduledTime, notesFromCollege, notesFromCollegeSeen}) {
+    constructor({college, repName, uuid, lastSignedIn, scheduledDate, notesFromCollege, notesFromCollegeSeen}) {
       this.college = college
       this.repName = repName
       this.uuid = uuid
-      this.lastSignedIn = lastSignedIn
-      this.scheduledTime = scheduledTime
-      this.notesFromCollege = notesFromCollege
+      this.lastSignedIn = parseDate(lastSignedIn)
+      this.scheduledDate = parseDate(scheduledDate)
+      this.notesFromCollege = notesFromCollege || ''
       this.notesFromCollegeSeen = notesFromCollegeSeen
     }
     get url() {
@@ -117,60 +129,59 @@
     }
   }
   function emptyLinkForm(tiers) {
+    const tierPriority = (() => {
+      if (tiers[0]) return tiers[0].priority
+      else return null
+    })()
     return {
       college: '',
       repName: '',
-      tier: tiers[0].priority,
-      notesToCollege: ''
+      tier: tierPriority,
+      notesToCollege: '',
+      error: null
     }
   }
   export default {
     name: 'links-view',
     data() {
-      const tiers = [ //will eventually be populated from a request
-        {priority: 1, description: 'High'},
-        {priority: 2, description: 'Low'}
-      ]
       return {
-        links: [ //will eventually be populated from a request
-          new Link({
-            college: 'Swarthmore',
-            repName: 'Josh Throckmorton',
-            uuid: 'abcdef',
-            lastSignedIn: null,
-            scheduledTime: null,
-            notesFromCollege: 'Long notes string, hoping this gets cut off',
-            notesFromCollegeSeen: true
-          }),
-          new Link({
-            college: 'UMass Amherst',
-            repName: null,
-            uuid: '123456',
-            lastSignedIn: new Date,
-            scheduledTime: [new Date, new Date(new Date().getTime() + 40 * 60 * 1000)],
-            notesFromCollege: 'Blah blah blah',
-            notesFromCollegeSeen: false
-          }),
-          new Link({
-            college: 'University of Toronto',
-            repName: 'John',
-            uuid: 'efefef',
-            lastSignedIn: new Date,
-            scheduledTime: null,
-            notesFromCollege: 'Long notes string, hoping this gets cut off',
-            notesFromCollegeSeen: false
-          })
-        ],
-        tiers,
-        linkForm: emptyLinkForm(tiers),
+        links: [],
+        tiers: [],
+        linkForm: emptyLinkForm([]),
         waitingForLink: false,
         selectedNotes: "Click on a college's notes" //should never be shown to the user
       }
     },
     methods: {
+      refreshLinks() {
+        fetch('/api/admin/link/all', {credentials: 'include'})
+          .then(response => response.json())
+          .then(({success, message, links}) => {
+            if (success) this.links = links.map(link => new Link(link))
+            else alert(message)
+          })
+      },
+      getTiers() {
+        setTimeout(() => { //will eventually send a request to the server
+          const tiers = [
+            {priority: 0, description: 'Impossible'},
+            {priority: 1, description: 'High'},
+            {priority: 2, description: 'Low'}
+          ]
+          this.tiers = tiers
+          this.linkForm = emptyLinkForm(tiers)
+        }, 500)
+      },
       openNotes(link) {
         this.selectedNotes = link.notesFromCollege
         this.$refs.notesDialog.open()
+        if (link.notesFromCollegeSeen) return //had already seen the notes
+        link.notesFromCollegeSeen = true
+        fetch('/api/admin/link/read-notes/' + link.uuid, {credentials: 'include'})
+          .then(response => response.json())
+          .then(({success, message}) => {
+            if (!success) alert(message)
+          })
       },
       openLinkForm() {
         this.$refs.linkForm.open()
@@ -179,13 +190,55 @@
         this.$refs.linkForm.close()
       },
       createLink() {
+        let error = null
+        if (!this.linkForm.college) error = 'Please specify a college'
+        this.linkForm.error = error
+        if (error) {
+          this.$refs.creationError.open()
+          return
+        }
+
+        fetch('/api/admin/link', {
+          method: 'POST',
+          headers: {
+            'content-type': 'application/json'
+          },
+          body: JSON.stringify({
+            college: this.linkForm.college,
+            repName: this.linkForm.repName || null,
+            tierPriority: this.linkForm.tier,
+            notesToCollege: this.linkForm.notesToCollege || null
+          }),
+          credentials: 'include'
+        })
+          .then(response => response.json())
+          .then(({success, message}) => {
+            if (success) {
+              this.closeLinkForm()
+              this.waitingForLink = false
+              this.linkForm = emptyLinkForm(this.tiers)
+              this.refreshLinks()
+            }
+            else alert(message)
+          })
         this.waitingForLink = true
-        setTimeout(() => { //will eventually actually send a request, so we simulate it here
-          this.closeLinkForm()
-          this.waitingForLink = false
-          this.linkForm = emptyLinkForm(this.tiers)
-        }, 1000)
+      },
+      deleteLink(index) {
+        const link = this.links[index]
+        fetch('/api/admin/link/' + link.uuid, {
+          method: 'DELETE',
+          credentials: 'include'
+        })
+          .then(response => response.json())
+          .then(({success, message}) => {
+            if (success) this.links.splice(index, 1)
+            else alert(message)
+          })
       }
+    },
+    mounted() {
+      this.refreshLinks()
+      this.getTiers()
     }
   }
 </script>
