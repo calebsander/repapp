@@ -24,7 +24,7 @@
         </md-list-item>
         <md-list-item>
           <router-link to="/admin/links" @click.native="toggleSidebar">
-            <md-icon>list</md-icon>
+            <md-icon>link</md-icon>
             Links
           </router-link>
         </md-list-item>
