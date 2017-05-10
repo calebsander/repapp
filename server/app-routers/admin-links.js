@@ -60,7 +60,7 @@ router.get('/upcoming', (req, res) => {
       model: Period,
       attributes: ['start', 'end']
     },
-    attributes: ['college', 'scheduledDate'],
+    attributes: ['college', 'scheduledDate', 'uuid'],
     where: {
       scheduledDate: {
         $ne: null,

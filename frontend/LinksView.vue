@@ -76,7 +76,7 @@
           <md-input-container>
             <label>Tier</label>
             <md-select required v-model="linkForm.tier">
-              <md-option v-for="tier in tiers" v-bind:value="tier.priority">
+              <md-option v-for="tier in tiers" :value="tier.priority">
                 {{ tier.description }}
               </md-option>
             </md-select>
@@ -98,6 +98,8 @@
 </template>
 
 <script>
+  import adminFetch from './admin-fetch'
+
   Date.prototype.toMMDD = function() {
     return String(this.getMonth() + 1) + '/' + String(this.getDate())
   }
@@ -154,12 +156,13 @@
     },
     methods: {
       refreshLinks() {
-        fetch('/api/admin/link/all', {credentials: 'include'})
-          .then(response => response.json())
-          .then(({success, message, links}) => {
-            if (success) this.links = links.map(link => new Link(link))
-            else alert(message)
-          })
+        adminFetch({
+          url: '/api/admin/link/all',
+          handler: ({links}) => {
+            this.links = links.map(link => new Link(link))
+          },
+          router: this.$router
+        })
       },
       getTiers() {
         setTimeout(() => { //will eventually send a request to the server
@@ -177,11 +180,10 @@
         this.$refs.notesDialog.open()
         if (link.notesFromCollegeSeen) return //had already seen the notes
         link.notesFromCollegeSeen = true
-        fetch('/api/admin/link/read-notes/' + link.uuid, {credentials: 'include'})
-          .then(response => response.json())
-          .then(({success, message}) => {
-            if (!success) alert(message)
-          })
+        adminFetch({
+          url: '/api/admin/link/read-notes/' + link.uuid,
+          router: this.$router
+        })
       },
       openLinkForm() {
         this.$refs.linkForm.open()
@@ -198,42 +200,32 @@
           return
         }
 
-        fetch('/api/admin/link', {
-          method: 'POST',
-          headers: {
-            'content-type': 'application/json'
-          },
-          body: JSON.stringify({
+        adminFetch({
+          url: '/api/admin/link',
+          data: {
             college: this.linkForm.college,
             repName: this.linkForm.repName || null,
             tierPriority: this.linkForm.tier,
             notesToCollege: this.linkForm.notesToCollege || null
-          }),
-          credentials: 'include'
+          },
+          handler: () => {
+            this.closeLinkForm()
+            this.waitingForLink = false
+            this.linkForm = emptyLinkForm(this.tiers)
+            this.refreshLinks()
+          },
+          router: this.$router
         })
-          .then(response => response.json())
-          .then(({success, message}) => {
-            if (success) {
-              this.closeLinkForm()
-              this.waitingForLink = false
-              this.linkForm = emptyLinkForm(this.tiers)
-              this.refreshLinks()
-            }
-            else alert(message)
-          })
         this.waitingForLink = true
       },
       deleteLink(index) {
         const link = this.links[index]
-        fetch('/api/admin/link/' + link.uuid, {
+        adminFetch({
+          url: '/api/admin/link/' + link.uuid,
           method: 'DELETE',
-          credentials: 'include'
+          handler: () => this.links.splice(index, 1),
+          router: this.$router
         })
-          .then(response => response.json())
-          .then(({success, message}) => {
-            if (success) this.links.splice(index, 1)
-            else alert(message)
-          })
       }
     },
     mounted() {
