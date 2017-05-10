@@ -58,7 +58,8 @@
       </md-table-body>
     </md-table>
 
-    <md-dialog-alert :md-content='selectedNotes' md-ok-text="Close" ref="notesDialog">
+    <!--Logs annoying errors if content is empty-->
+    <md-dialog-alert :md-content="selectedNotes || ' '" md-ok-text="Close" ref="notesDialog">
     </md-dialog-alert>
 
     <md-dialog md-open-from="#new-link" md-close-to="#new-link" ref="linkForm">
@@ -93,7 +94,8 @@
         <md-button class="md-primary" @click.native="createLink">Create</md-button>
       </md-dialog-actions>
     </md-dialog>
-    <md-dialog-alert ref="creationError" md-title="Error creating link" :md-content="linkForm.error"></md-dialog-alert>
+    <!--Logs annoying errors if content is empty-->
+    <md-dialog-alert ref="creationError" md-title="Error creating link" :md-content="linkForm.error || ' '"></md-dialog-alert>
   </div>
 </template>
 
@@ -151,7 +153,7 @@
         tiers: [],
         linkForm: emptyLinkForm([]),
         waitingForLink: false,
-        selectedNotes: "Click on a college's notes" //should never be shown to the user
+        selectedNotes: null
       }
     },
     methods: {

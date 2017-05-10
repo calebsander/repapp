@@ -16,7 +16,8 @@
         <md-button class="md-primary" @click.native="logIn">Log in</md-button>
       </md-dialog-actions>
     </md-dialog>
-    <md-dialog-alert ref="loginError" md-title="Error loging in" :md-content="loginError"></md-dialog-alert>
+    <!--Logs annoying errors if content is empty-->
+    <md-dialog-alert ref="loginError" md-title="Error loging in" :md-content="loginError || ' '"></md-dialog-alert>
   </div>
 </template>
 
