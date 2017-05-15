@@ -22,8 +22,7 @@
             {{ day.name }}
             ({{ mondayDate.addDays(dayIndex).toShortDate() }})
             <md-tooltip md-direction="bottom" v-if="admin && isUnavailableDay(day)">
-              Unavailability reason:
-              {{ unavailabilities.days.get(day.name).reason || 'Unknown' }}
+              {{ getUnavailableText({day}) }}
             </md-tooltip>
           </md-table-head>
         </md-table-row>
@@ -47,8 +46,7 @@
                 </div>
               </md-card-header>
               <md-tooltip md-direction="top" v-if="admin && isUnavailablePeriod(dayPeriod)">
-                Unavailability reason:
-                {{ getUnavailableReason(dayPeriod) }}
+                {{ getUnavailableText({period: dayPeriod}) }}
               </md-tooltip>
               <md-tooltip md-direction="top" v-if="admin && visits.has(dayPeriod)">
                 College:
@@ -230,7 +228,7 @@
         setTimeout(() => { //this will eventually actually send a request to the server
           this.loading = false
           this.unavailabilities.periods = new Map()
-            .set(this.days[1].periods[Math.floor(Math.random() * 7)], {reason: 'Special assembly', tierPriority: 2})
+            .set(this.days[1].periods[Math.floor(Math.random() * 7)], {tierPriority: 2})
             .set(this.days[4].periods[Math.floor(Math.random() * 7)], {reason: 'Calc 2', tierPriority: 0})
           this.unavailabilities.days = new Map()
             .set(this.days[0].name, {reason: 'Break', tierPriority: 0})
@@ -253,7 +251,7 @@
         return (
           this.unavailabilities.periods.get(period) ||
           this.unavailabilities.days.get(period.day.name)
-        ).reason || 'Unknown'
+        ).reason || ''
       },
       openUnavailableForm({period, day}) {
         this.unavailableForm = emptyUnavailableForm()
@@ -293,6 +291,18 @@
             {priority: 2, description: 'Low'}
           ]
         }, 500)
+      },
+      getUnavailableText({day, period}) {
+        let unavailability
+        if (day) unavailability = this.unavailabilities.days.get(day.name)
+        else if (period) {
+          unavailability =
+            this.unavailabilities.periods.get(period) ||
+            this.unavailabilities.days.get(period.day.name)
+        }
+        const {reason} = unavailability
+        if (reason) return 'Unavailable: ' + reason
+        else return 'Unavailable'
       }
     },
     mounted() {
