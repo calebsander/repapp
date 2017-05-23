@@ -49,23 +49,33 @@ router.get('/read-notes/:linkId', (req, res) => {
     .catch(respondWithError(res))
 })
 
-router.get('/upcoming', (req, res) => {
+const UPCOMING_QUERY = {
+  scheduledDate: {
+    $ne: null,
+    $gt: new Date
+  }
+}
+router.get('/upcoming/count', (req, res) => {
+  Link.count({where: UPCOMING_QUERY})
+    .then(count => res.json({success: true, count}))
+    .catch(respondWithError(res))
+})
+router.get('/upcoming/:offset', (req, res) => {
+  const offset = Number(req.params.offset)
   Link.findAll({
     include: {
       model: Period,
-      attributes: ['start', 'end']
+      attributes: ['start']
     },
     attributes: ['college', 'scheduledDate', 'uuid'],
-    where: {
-      scheduledDate: {
-        $ne: null,
-        $gt: new Date
-      }
-    },
+    where: UPCOMING_QUERY,
     order: [
       'scheduledDate',
-      [Period, 'start']
-    ]
+      [Period, 'start'],
+      'college'
+    ],
+    offset,
+    limit: 10
   })
     .then(visits => res.json({ success: true, visits }))
     .catch(respondWithError(res))
