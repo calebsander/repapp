@@ -1,8 +1,14 @@
 const express = require('express')
-const {link: Link, period: Period} = require('../database')
+const { link: Link, period: Period } = require('../database')
 const respondWithError = require('../respond-with-error')
 
 const router = express.Router()
+
+router.delete('/:linkId', function (req, res) {
+  Link.destroy({ where: { uuid: req.params.linkId } })
+    .then(link => res.json({ success: true }))
+    .catch(respondWithError(res))
+})
 
 router.get('/all', (req, res) => {
   Link.findAll({
@@ -21,7 +27,7 @@ router.get('/all', (req, res) => {
       'lastSignedIn'
     ]
   })
-    .then(links => res.json({success: true, links}))
+    .then(links => res.json({ success: true, links }))
     .catch(respondWithError(res))
 })
 
@@ -33,24 +39,13 @@ router.post('/', (req, res) => {
     notesToCollege: req.body.notesToCollege,
     notesFromCollegeSeen: true
   })
-    .then(link => res.json({success: true, uuid: link.uuid}))
-    .catch(respondWithError(res))
-})
-
-router.delete('/:linkId', (req, res) => {
-  Link.findOne({where: {uuid: req.params.linkId}})
-    .then(link => link.destroy())
-    .then(() => res.json({success: true}))
+    .then(link => res.json({ success: true, uuid: link.uuid }))
     .catch(respondWithError(res))
 })
 
 router.get('/read-notes/:linkId', (req, res) => {
-  Link.findOne({where: {uuid: req.params.linkId}})
-    .then(link => {
-      link.notesFromCollegeSeen = true
-      return link.save()
-    })
-    .then(() => res.json({success: true}))
+  Link.update({ notesFromCollegeSeen: true }, { where: { uuid: req.params.linkId } })
+    .then(() => res.json({ success: true }))
     .catch(respondWithError(res))
 })
 
@@ -72,7 +67,7 @@ router.get('/upcoming', (req, res) => {
       [Period, 'start']
     ]
   })
-    .then(visits => res.json({success: true, visits}))
+    .then(visits => res.json({ success: true, visits }))
     .catch(respondWithError(res))
 })
 

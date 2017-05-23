@@ -11,7 +11,6 @@ router.use(bodyParser.json())
 
 router.use('/login', loginRouter)
 router.use('/admin', adminRouter)
-
 router.use('/logged-in', loggedInRouter)
 
 // API calls college reps need
