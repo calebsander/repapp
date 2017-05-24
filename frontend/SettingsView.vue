@@ -48,11 +48,11 @@
         <form>
           <md-input-container>
             <label>E-mail</label>
-            <md-input type="email" required v-model="adminForm.email"></md-input>
+            <md-input type="email" required v-model="adminForm.email" ref="email"></md-input>
           </md-input-container>
           <md-input-container>
             <label>Password</label>
-            <md-input type="password" required v-model="adminForm.password"></md-input>
+            <md-input type="password" required v-model="adminForm.password" @keyup.enter.native="createAdmin"></md-input>
           </md-input-container>
         </form>
       </md-dialog-content>
@@ -105,6 +105,7 @@
     methods: {
       openAdminForm() {
         this.$refs.adminForm.open()
+        setTimeout(() => this.$refs.email.$el.focus(), 300)
       },
       closeAdminForm() {
         this.$refs.adminForm.close()

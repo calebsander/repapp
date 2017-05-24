@@ -5,11 +5,11 @@
       <md-dialog-content>
         <md-input-container>
           <label>E-mail</label>
-          <md-input type="email" required v-model="email"></md-input>
+          <md-input type="email" required v-model="email" autofocus></md-input>
         </md-input-container>
         <md-input-container>
           <label>Password</label>
-          <md-input type="password" required v-model="password"></md-input>
+          <md-input type="password" required v-model="password" @keyup.enter.native="logIn"></md-input>
         </md-input-container>
       </md-dialog-content>
       <md-dialog-actions>
