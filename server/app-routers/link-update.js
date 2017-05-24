@@ -15,7 +15,7 @@ router.post('/visit', function (req, res) {
 })
 
 router.delete('/visit', function (req, res) {
-  db.link.destroy({where: {uuid:req.link.uuid} }).then(link => {
+  db.link.update({periodID:null, scheduledDate:null}, {where:{uuid:req.link.uuid}}).then(link => {
       res.json({success: true})
   }).catch(function (err){
     res.json({success: false, message: err.message})
