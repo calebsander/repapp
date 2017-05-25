@@ -1,8 +1,14 @@
 const express = require('express')
-const {link: Link, period: Period} = require('../database')
+const { link: Link, period: Period } = require('../database')
 const respondWithError = require('../respond-with-error')
 
 const router = express.Router()
+
+router.delete('/:linkId', function (req, res) {
+  Link.destroy({ where: { uuid: req.params.linkId } })
+    .then(link => res.json({ success: true }))
+    .catch(respondWithError(res))
+})
 
 router.get('/all', (req, res) => {
   Link.findAll({
@@ -21,7 +27,7 @@ router.get('/all', (req, res) => {
       'lastSignedIn'
     ]
   })
-    .then(links => res.json({success: true, links}))
+    .then(links => res.json({ success: true, links }))
     .catch(respondWithError(res))
 })
 
@@ -33,46 +39,45 @@ router.post('/', (req, res) => {
     notesToCollege: req.body.notesToCollege,
     notesFromCollegeSeen: true
   })
-    .then(link => res.json({success: true, uuid: link.uuid}))
-    .catch(respondWithError(res))
-})
-
-router.delete('/:linkId', (req, res) => {
-  Link.findOne({where: {uuid: req.params.linkId}})
-    .then(link => link.destroy())
-    .then(() => res.json({success: true}))
+    .then(link => res.json({ success: true, uuid: link.uuid }))
     .catch(respondWithError(res))
 })
 
 router.get('/read-notes/:linkId', (req, res) => {
-  Link.findOne({where: {uuid: req.params.linkId}})
-    .then(link => {
-      link.notesFromCollegeSeen = true
-      return link.save()
-    })
-    .then(() => res.json({success: true}))
+  Link.update({ notesFromCollegeSeen: true }, { where: { uuid: req.params.linkId } })
+    .then(() => res.json({ success: true }))
     .catch(respondWithError(res))
 })
 
-router.get('/upcoming', (req, res) => {
+const UPCOMING_QUERY = {
+  scheduledDate: {
+    $ne: null,
+    $gt: new Date
+  }
+}
+router.get('/upcoming/count', (req, res) => {
+  Link.count({where: UPCOMING_QUERY})
+    .then(count => res.json({success: true, count}))
+    .catch(respondWithError(res))
+})
+router.get('/upcoming/:offset', (req, res) => {
+  const offset = Number(req.params.offset)
   Link.findAll({
     include: {
       model: Period,
-      attributes: ['start', 'end']
+      attributes: ['start']
     },
     attributes: ['college', 'scheduledDate', 'uuid'],
-    where: {
-      scheduledDate: {
-        $ne: null,
-        $gt: new Date
-      }
-    },
+    where: UPCOMING_QUERY,
     order: [
       'scheduledDate',
-      [Period, 'start']
-    ]
+      [Period, 'start'],
+      'college'
+    ],
+    offset,
+    limit: 10
   })
-    .then(visits => res.json({success: true, visits}))
+    .then(visits => res.json({ success: true, visits }))
     .catch(respondWithError(res))
 })
 

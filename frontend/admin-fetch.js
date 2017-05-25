@@ -17,7 +17,8 @@ export default ({url, method, data, handler, router}) => {
       }
       else {
         console.error(message)
-        router.push('/admin/login')
+        if (message === 'Must be logged in') router.push('/admin/login')
+        else alert('Error occurred: ' + message)
       }
     })
 }
