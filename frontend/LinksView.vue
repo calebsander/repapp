@@ -68,7 +68,7 @@
         <form>
           <md-input-container>
             <label>College</label>
-            <md-input required v-model="linkForm.college"></md-input>
+            <md-input required v-model="linkForm.college" ref="college"></md-input>
           </md-input-container>
           <md-input-container>
             <label>Rep name</label>
@@ -189,6 +189,7 @@
       },
       openLinkForm() {
         this.$refs.linkForm.open()
+        setTimeout(() => this.$refs.college.$el.focus(), 300)
       },
       closeLinkForm() {
         this.$refs.linkForm.close()
