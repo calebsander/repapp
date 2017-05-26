@@ -5,6 +5,8 @@ const router = express.Router()
 const validatePostParams = require('../validate-post-params')
 const localDate = require('../local-date')
 
+const MILLIS_PER_DAY = 24 * 60 * 60 * 1000
+
 function destroyDay(day) {
   return UnavailableDay.destroy({
     where: {day}
@@ -23,7 +25,7 @@ router.post('/day',
     const dateArray = []
     while (day <= end) {
       dateArray.push(day)
-      day = new Date(day.getTime() + 24 * 60 * 60 * 1000)
+      day = new Date(day.getTime() + MILLIS_PER_DAY)
     }
     Promise.all(dateArray.map(day => {
       const createDay = UnavailableDay.create({
@@ -60,13 +62,14 @@ router.post('/period',
     tier: Number
   }),
   (req, res) => {
-    destroyPeriod(req.body.day, req.body.period)
+    const {day, period} = req.body
+    destroyPeriod(day, period)
       .then(() =>
         UnavailablePeriod.create({
           repeatWeekly: req.body.repeatWeekly,
           repeatEnd: req.body.repeatEnd,
-          periodId: req.body.period,
-          day: req.body.day,
+          periodId: period,
+          day,
           tierPriority: req.body.tier,
           reason: req.body.reason
         })
