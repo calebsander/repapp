@@ -237,6 +237,12 @@
       getWeekDay(date) {
         return this.days[date.getDay() - 1] //getDay() of 1 is Monday
       },
+      getDate(day) {
+        return this.mondayDate.addDays(this.days.indexOf(day))
+      },
+      getPeriodId(period) { //will eventually use periods API
+        return 1
+      },
       getEvents() {
         this.loading = true
         adminFetch({
@@ -286,13 +292,15 @@
       openUnavailableForm({period, day}) {
         this.unavailableForm = emptyUnavailableForm()
         if (period) {
-          if (this.unavailabilities.periods.has(period.time)) {
-            this.unavailableForm.reason = this.getUnavailableReason(period)
-            this.unavailableForm.tier = this.unavailabilities.periods.get(period.time).tierPriority
-          }
-          else {
-            ({day} = period)
-            period = null
+          if (this.isUnavailablePeriod(period)) {
+            if (this.unavailabilities.periods.has(period.time)) {
+              this.unavailableForm.reason = this.getUnavailableReason(period)
+              this.unavailableForm.tier = this.unavailabilities.periods.get(period.time).tierPriority
+            }
+            else {
+              ({day} = period)
+              period = null
+            }
           }
         }
         if (day && this.isUnavailableDay(day)) {
@@ -307,11 +315,63 @@
         this.$refs.unavailableForm.close()
       },
       updateUnavailability() {
-        this.unavailableForm.waitingForSubmit = true
-        setTimeout(() => { //will eventually actually send a request, so we simulate it here
+        const {period, day} = this.unavailableForm.target
+        const date = this.getDate(day || period.day).toFullDate()
+        const handler = () => {
+          this.getEvents()
           this.closeUnavailableForm()
           this.unavailableForm.waitingForSubmit = false
-        }, 1000)
+        }
+        this.unavailableForm.waitingForSubmit = true
+        if (this.unavailableForm.unavailable) {
+          if (period) { //creating period
+            adminFetch({
+              url: '/api/admin/unavailabilities/period',
+              data: {
+                repeatWeekly: false,
+                period: this.getPeriodId(period),
+                day: date,
+                tier: this.unavailableForm.tier,
+                reason: this.unavailableForm.reason || null
+              },
+              handler,
+              router: this.$router
+            })
+          }
+          else { //creating day
+            adminFetch({
+              url: '/api/admin/unavailabilities/day',
+              data: {
+                start: date,
+                end: date,
+                tier: this.unavailableForm.tier,
+                reason: this.unavailableForm.reason || null
+              },
+              handler,
+              router: this.$router
+            })
+          }
+        }
+        else {
+          if (period) { //removing period
+            adminFetch({
+              url: '/api/admin/unavailabilities/period/' +
+                date + '/' +
+                String(this.getPeriodId(period)),
+              method: 'DELETE',
+              handler,
+              router: this.$router
+            })
+          }
+          else { //removing day
+            adminFetch({
+              url: '/api/admin/unavailabilities/day/' + date,
+              method: 'DELETE',
+              handler,
+              router: this.$router
+            })
+          }
+        }
       },
       getTiers() {
         setTimeout(() => { //will eventually be populated from a request
