@@ -69,7 +69,7 @@
           <label>Tier</label>
           <md-select required v-model="unavailableForm.tier" :disabled="!unavailableForm.unavailable">
             <md-option v-for="tier in tiers" :value="tier.priority">
-              {{ tier.description }}
+              {{ tier.unavailabilityDescription }}
             </md-option>
           </md-select>
         </md-input-container>
@@ -314,13 +314,11 @@
         }, 1000)
       },
       getTiers() {
-        setTimeout(() => { //will eventually be populated from a request
-          this.tiers = [
-            {priority: 0, description: 'Unavailable'},
-            {priority: 1, description: 'High'},
-            {priority: 2, description: 'Low'}
-          ]
-        }, 500)
+        adminFetch({
+          url: '/api/admin/tiers/unavailability',
+          handler: ({tiers}) => this.tiers = tiers,
+          router: this.$router
+        })
       },
       getUnavailableText({day, period}) {
         let unavailability
