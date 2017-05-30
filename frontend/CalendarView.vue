@@ -33,7 +33,7 @@
             <md-card md-with-hover class="full-width" v-if="dayPeriod"
               :class="{
                 unavailable: isUnavailablePeriod(dayPeriod),
-                visiting: visits.has(dayPeriod)
+                visiting: visits.has(dayPeriod.time)
               }"
               @click.native="openUnavailableForm({period: dayPeriod})"
             >
@@ -48,9 +48,9 @@
               <md-tooltip md-direction="top" v-if="admin && isUnavailablePeriod(dayPeriod)">
                 {{ getUnavailableText({period: dayPeriod}) }}
               </md-tooltip>
-              <md-tooltip md-direction="top" v-if="admin && visits.has(dayPeriod)">
+              <md-tooltip md-direction="top" v-if="admin && visits.has(dayPeriod.time)">
                 College:
-                {{ visits.get(dayPeriod) }}
+                {{ visits.get(dayPeriod.time) }}
               </md-tooltip>
             </md-card>
           </md-table-cell>
@@ -69,7 +69,7 @@
           <label>Tier</label>
           <md-select required v-model="unavailableForm.tier" :disabled="!unavailableForm.unavailable">
             <md-option v-for="tier in tiers" :value="tier.priority">
-              {{ tier.description }}
+              {{ tier.unavailabilityDescription }}
             </md-option>
           </md-select>
         </md-input-container>
@@ -84,23 +84,34 @@
 </template>
 
 <script>
+  import adminFetch from './admin-fetch'
+
   function addZero(num) {
     if (num < 10) return '0' + String(num)
     return String(num)
   }
-  Date.prototype.addDays = function(days) {
-    return new Date(this.getTime() + 86400000 * days)
-  }
-  Date.prototype.toHHMM = function() {
-    return (
-      String((this.getHours() + 11) % 12 + 1) +
-      ':' +
-      addZero(this.getMinutes())
-    )
-  }
-  Date.prototype.toShortDate = function() {
-    return String(this.getMonth() + 1) + '/' + String(this.getDate())
-  }
+  Object.assign(Date.prototype,
+    {
+      addDays(days) {
+        return new Date(this.getTime() + 86400000 * days)
+      },
+      toHHMM() {
+        return (
+          String((this.getHours() + 11) % 12 + 1) +
+          ':' +
+          addZero(this.getMinutes())
+        )
+      },
+      toShortDate() {
+        return String(this.getMonth() + 1) + '/' + String(this.getDate())
+      },
+      toFullDate() {
+        return String(this.getFullYear()) + '-' +
+          addZero(this.getMonth() + 1) + '-' +
+          addZero(this.getDate())
+      }
+    }
+  )
   const now = new Date
   const makeTime = (hour, minute) =>
     new Date(now.getFullYear(), now.getMonth(), now.getDate(), hour, minute)
@@ -122,63 +133,58 @@
         days: [
           {
             name: 'Monday',
-            periods: [
-              {period: '1', time: [makeTime(8, 30), makeTime(9, 10)]},
-              {period: '2', time: [makeTime(9, 15), makeTime(9, 55)]},
-              {period: '3', time: [makeTime(10, 25), makeTime(11, 5)]},
-              {period: '4', time: [makeTime(11, 10), makeTime(11, 50)]},
-              {period: '5', time: [makeTime(11, 55), makeTime(12, 35)]},
-              {period: '6', time: [makeTime(1, 20), makeTime(2, 0)]},
-              {period: '7', time: [makeTime(2, 5), makeTime(2, 45)]}
-            ]
+            periods: new Map()
+              .set('1', [makeTime(8, 30), makeTime(9, 10)])
+              .set('2', [makeTime(9, 15), makeTime(9, 55)])
+              .set('3', [makeTime(10, 25), makeTime(11, 5)])
+              .set('4', [makeTime(11, 10), makeTime(11, 50)])
+              .set('5', [makeTime(11, 55), makeTime(12, 35)])
+              .set('6', [makeTime(1, 20), makeTime(2, 0)])
+              .set('7', [makeTime(2, 5), makeTime(2, 45)])
           },
           {
             name: 'Tuesday',
-            periods: [
-              {period: '1', time: [makeTime(8, 30), makeTime(9, 10)]},
-              {period: '2', time: [makeTime(9, 15), makeTime(9, 55)]},
-              {period: '3', time: [makeTime(10, 35), makeTime(11, 30)]},
-              {period: '4', time: [makeTime(11, 35), makeTime(12, 15)]},
-              {period: '5', time: [makeTime(12, 20), makeTime(1, 0)]},
-              {period: '6', time: [makeTime(1, 45), makeTime(2, 25)]},
-              {period: '7', time: [makeTime(2, 30), makeTime(3, 10)]}
-            ]
+            periods: new Map()
+              .set('1', [makeTime(8, 30), makeTime(9, 10)])
+              .set('2', [makeTime(9, 15), makeTime(9, 55)])
+              .set('3', [makeTime(10, 35), makeTime(11, 30)])
+              .set('4', [makeTime(11, 35), makeTime(12, 15)])
+              .set('5', [makeTime(12, 20), makeTime(1, 0)])
+              .set('6', [makeTime(1, 45), makeTime(2, 25)])
+              .set('7', [makeTime(2, 30), makeTime(3, 10)])
           },
           {
             name: 'Wednesday',
-            periods: [
-              {period: '1', time: [makeTime(8, 30), makeTime(9, 10)]},
-              {period: '2', time: [makeTime(9, 15), makeTime(9, 55)]},
-              {period: '3', time: [makeTime(10, 25), makeTime(11, 5)]},
-              {period: '4', time: [makeTime(11, 10), makeTime(11, 50)]},
-              {period: '5', time: [makeTime(11, 55), makeTime(12, 35)]},
-              {period: '6', time: [makeTime(1, 20), makeTime(2, 0)]},
-              {period: '7', time: [makeTime(2, 5), makeTime(2, 45)]}
-            ]
+            periods: new Map()
+              .set('1', [makeTime(8, 30), makeTime(9, 10)])
+              .set('2', [makeTime(9, 15), makeTime(9, 55)])
+              .set('3', [makeTime(10, 25), makeTime(11, 5)])
+              .set('4', [makeTime(11, 10), makeTime(11, 50)])
+              .set('5', [makeTime(11, 55), makeTime(12, 35)])
+              .set('6', [makeTime(1, 20), makeTime(2, 0)])
+              .set('7', [makeTime(2, 5), makeTime(2, 45)])
           },
           {
             name: 'Thursday',
-            periods: [
-              {period: '1', time: [makeTime(8, 30), makeTime(9, 10)]},
-              {period: '2', time: [makeTime(9, 15), makeTime(9, 55)]},
-              {period: '3', time: [makeTime(10, 25), makeTime(11, 15)]},
-              {period: '4', time: [makeTime(11, 20), makeTime(12, 0)]},
-              {period: '5', time: [makeTime(1, 55), makeTime(2, 35)]},
-              {period: '6', time: [makeTime(2, 40), makeTime(3, 20)]},
-              {period: '7', time: [makeTime(3, 25), makeTime(4, 5)]}
-            ]
+            periods: new Map()
+              .set('1', [makeTime(8, 30), makeTime(9, 10)])
+              .set('2', [makeTime(9, 15), makeTime(9, 55)])
+              .set('3', [makeTime(10, 25), makeTime(11, 15)])
+              .set('4', [makeTime(11, 20), makeTime(12, 0)])
+              .set('5', [makeTime(1, 55), makeTime(2, 35)])
+              .set('6', [makeTime(2, 40), makeTime(3, 20)])
+              .set('7', [makeTime(3, 25), makeTime(4, 5)])
           },
           {
             name: 'Friday',
-            periods: [
-              {period: '1', time: [makeTime(8, 30), makeTime(9, 10)]},
-              {period: '2', time: [makeTime(9, 15), makeTime(9, 55)]},
-              {period: '3', time: [makeTime(10, 25), makeTime(11, 5)]},
-              {period: '4', time: [makeTime(11, 10), makeTime(11, 50)]},
-              {period: '5', time: [makeTime(11, 55), makeTime(12, 35)]},
-              {period: '6', time: [makeTime(1, 20), makeTime(2, 0)]},
-              {period: '7', time: [makeTime(2, 5), makeTime(2, 45)]}
-            ]
+            periods: new Map()
+              .set('1', [makeTime(8, 30), makeTime(9, 10)])
+              .set('2', [makeTime(9, 15), makeTime(9, 55)])
+              .set('3', [makeTime(10, 25), makeTime(11, 5)])
+              .set('4', [makeTime(11, 10), makeTime(11, 50)])
+              .set('5', [makeTime(11, 55), makeTime(12, 35)])
+              .set('6', [makeTime(1, 20), makeTime(2, 0)])
+              .set('7', [makeTime(2, 5), makeTime(2, 45)])
           }
         ],
         mondayDate: lastMonday,
@@ -196,7 +202,7 @@
       maxPeriods() {
         let max
         for (const day of this.days) {
-          const dayPeriods = day.periods.length
+          const dayPeriods = day.periods.size
           if (max === undefined || dayPeriods > max) max = dayPeriods
         }
         return max
@@ -204,10 +210,15 @@
       periods() {
         const periods = []
         for (let day = 0; day < this.days.length; day++) {
-          for (let period = 0; period < this.days[day].periods.length; period++) {
-            if (!periods[period]) periods[period] = []
-            periods[period][day] = this.days[day].periods[period]
-            periods[period][day].day = this.days[day]
+          let periodIndex = 0
+          for (const [period, time] of this.days[day].periods) {
+            if (!periods[periodIndex]) periods[periodIndex] = []
+            periods[periodIndex][day] = {
+              period,
+              time,
+              day: this.days[day]
+            }
+            periodIndex++
           }
         }
         return periods
@@ -223,42 +234,61 @@
       nextWeek() {
         this.mondayDate = this.mondayDate.addDays(7)
       },
-      getUnavailabilities() {
+      getWeekDay(date) {
+        return this.days[date.getDay() - 1] //getDay() of 1 is Monday
+      },
+      getEvents() {
         this.loading = true
-        setTimeout(() => { //this will eventually actually send a request to the server
-          this.loading = false
-          this.unavailabilities.periods = new Map()
-            .set(this.days[1].periods[Math.floor(Math.random() * 7)], {tierPriority: 2})
-            .set(this.days[4].periods[Math.floor(Math.random() * 7)], {reason: 'Calc 2', tierPriority: 0})
-          this.unavailabilities.days = new Map()
-            .set(this.days[0].name, {reason: 'Break', tierPriority: 0})
-            .set(this.days[3].name, {tierPriority: 1})
-          this.visits = new Map()
-            .set(this.days[2].periods[1], 'University of Toronto')
-            .set(this.days[2].periods[5], 'Swarthmore')
-        }, 500)
+        adminFetch({
+          url: '/api/admin/events/' + this.mondayDate.toFullDate(),
+          handler: ({periods, days, visits}) => {
+            const unavailablePeriods = new Map
+            for (const {day, period: {period}, reason, tierPriority} of periods) {
+              const dayPeriod = this.getWeekDay(new Date(day)).periods.get(period)
+              unavailablePeriods.set(dayPeriod, {reason, tierPriority})
+            }
+            const unavailableDays = new Map
+            for (const {day, reason, tierPriority} of days) {
+              const weekDay = this.getWeekDay(new Date(day))
+              unavailableDays.set(weekDay, {reason, tierPriority})
+            }
+            this.unavailabilities = {
+              periods: unavailablePeriods,
+              days: unavailableDays
+            }
+            const visitsMap = new Map
+            for (const {college, period: {period}, scheduledDate} of visits) {
+              const weekDay = this.getWeekDay(new Date(scheduledDate))
+              const dayPeriod = weekDay.periods.get(period)
+              visitsMap.set(dayPeriod, college)
+            }
+            this.visits = visitsMap
+            this.loading = false
+          },
+          router: this.$router
+        })
       },
       isUnavailablePeriod(period) {
         return (
-          this.unavailabilities.periods.has(period) ||
-          this.unavailabilities.days.has(period.day.name)
+          this.unavailabilities.periods.has(period.time) ||
+          this.unavailabilities.days.has(period.day)
         )
       },
       isUnavailableDay(day) {
-        return this.unavailabilities.days.has(day.name)
+        return this.unavailabilities.days.has(day)
       },
       getUnavailableReason(period) {
         return (
-          this.unavailabilities.periods.get(period) ||
-          this.unavailabilities.days.get(period.day.name)
+          this.unavailabilities.periods.get(period.time) ||
+          this.unavailabilities.days.get(period.day)
         ).reason || ''
       },
       openUnavailableForm({period, day}) {
         this.unavailableForm = emptyUnavailableForm()
         if (period) {
-          if (this.unavailabilities.periods.has(period)) {
+          if (this.unavailabilities.periods.has(period.time)) {
             this.unavailableForm.reason = this.getUnavailableReason(period)
-            this.unavailableForm.tier = this.unavailabilities.periods.get(period).tierPriority
+            this.unavailableForm.tier = this.unavailabilities.periods.get(period.time).tierPriority
           }
           else {
             ({day} = period)
@@ -266,8 +296,8 @@
           }
         }
         if (day && this.isUnavailableDay(day)) {
-          this.unavailableForm.reason = this.unavailabilities.days.get(day.name).reason
-          this.unavailableForm.tier = this.unavailabilities.days.get(day.name).tierPriority
+          this.unavailableForm.reason = this.unavailabilities.days.get(day).reason
+          this.unavailableForm.tier = this.unavailabilities.days.get(day).tierPriority
         }
         else this.unavailableForm.tier = this.tiers[0].priority
         this.unavailableForm.target = {period, day}
@@ -284,21 +314,19 @@
         }, 1000)
       },
       getTiers() {
-        setTimeout(() => { //will eventually be populated from a request
-          this.tiers = [
-            {priority: 0, description: 'Unavailable'},
-            {priority: 1, description: 'High'},
-            {priority: 2, description: 'Low'}
-          ]
-        }, 500)
+        adminFetch({
+          url: '/api/admin/tiers/unavailability',
+          handler: ({tiers}) => this.tiers = tiers,
+          router: this.$router
+        })
       },
       getUnavailableText({day, period}) {
         let unavailability
-        if (day) unavailability = this.unavailabilities.days.get(day.name)
+        if (day) unavailability = this.unavailabilities.days.get(day)
         else if (period) {
           unavailability =
-            this.unavailabilities.periods.get(period) ||
-            this.unavailabilities.days.get(period.day.name)
+            this.unavailabilities.periods.get(period.time) ||
+            this.unavailabilities.days.get(period.day)
         }
         const {reason} = unavailability
         if (reason) return 'Unavailable: ' + reason
@@ -306,12 +334,12 @@
       }
     },
     mounted() {
-      this.getUnavailabilities()
+      this.getEvents()
       this.getTiers()
     },
     watch: {
       mondayDate() {
-        this.getUnavailabilities()
+        this.getEvents()
       }
     }
   }

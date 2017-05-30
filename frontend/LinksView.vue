@@ -78,7 +78,7 @@
             <label>Tier</label>
             <md-select required v-model="linkForm.tier">
               <md-option v-for="tier in tiers" :value="tier.priority">
-                {{ tier.description }}
+                {{ tier.collegeDescription }}
               </md-option>
             </md-select>
           </md-input-container>
@@ -167,15 +167,14 @@
         })
       },
       getTiers() {
-        setTimeout(() => { //will eventually send a request to the server
-          const tiers = [
-            {priority: 0, description: 'Impossible'},
-            {priority: 1, description: 'High'},
-            {priority: 2, description: 'Low'}
-          ]
-          this.tiers = tiers
-          this.linkForm = emptyLinkForm(tiers)
-        }, 500)
+        adminFetch({
+          url: '/api/admin/tiers/college',
+          handler: ({tiers}) => {
+            this.tiers = tiers
+            this.linkForm = emptyLinkForm(tiers)
+          },
+          router: this.$router
+        })
       },
       openNotes(link) {
         this.selectedNotes = link.notesFromCollege
