@@ -56,9 +56,7 @@ router.post('/new-admin',
   (req, res) => {
     const {email, password} = req.body
     Admin.findOne({
-      where: {
-        email
-      }
+      where: {email}
     })
       .then(admin => {
         if (admin) throw new Error('Email already in use')
@@ -98,5 +96,23 @@ router.delete('/admin/:email', (req, res) => {
     .then(() => res.json({success: true}))
     .catch(respondWithError(res))
 })
+router.post('/password',
+  validatePostParams({
+    password: String
+  }),
+  (req, res) => {
+    Admin.update(
+      {
+        password: req.body.password,
+        passwordHash: null
+      },
+      {
+        where: {email: req.session.admin.email}
+      }
+    )
+      .then(() => res.json({success: true}))
+      .catch(respondWithError(res))
+  }
+)
 
 module.exports = router

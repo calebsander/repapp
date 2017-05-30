@@ -13,10 +13,13 @@
             <md-list>
               <md-list-item class="admin-row">
                 You (cannot delete)
+                <md-button class="md-raised left-spaced" @click.native="changePassword" id="password">
+                  <md-icon>lock_outline</md-icon>
+                </md-button>
               </md-list-item>
               <md-list-item class="admin-row" v-for="admin in admins">
                 {{ admin }}
-                <md-button class="md-raised trash" @click.native="deleteAdmin(admin)">
+                <md-button class="md-raised left-spaced" @click.native="deleteAdmin(admin)">
                   <md-icon>delete</md-icon>
                 </md-button>
               </md-list-item>
@@ -64,6 +67,20 @@
     </md-dialog>
     <!--Logs annoying errors if content is empty-->
     <md-dialog-alert ref="creationError" md-title="Error creating admin" :md-content="adminForm.error || ' '"></md-dialog-alert>
+
+    <md-dialog md-open-from="#password" md-close-to="#password" ref="passwordForm">
+      <md-dialog-title>Change password</md-dialog-title>
+      <md-dialog-content>
+        <md-input-container md-has-password>
+          <label>New password</label>
+          <md-input type="password" required v-model="newPassword" ref="password" @keyup.enter.native="savePassword"></md-input>
+        </md-input-container>
+      </md-dialog-content>
+      <md-dialog-actions>
+        <md-spinner md-indeterminate v-show="waitingForCreate"></md-spinner>
+        <md-button class="md-primary" @click.native="savePassword">Done</md-button>
+      </md-dialog-actions>
+    </md-dialog>
   </div>
 </template>
 
@@ -91,7 +108,8 @@
         emailSettings: null,
         adminForm: emptyAdminForm(),
         waitingForCreate: false,
-        admins: []
+        admins: [],
+        newPassword: ''
       }
     },
     mounted() {
@@ -150,6 +168,23 @@
           handler: () => this.fetchAdmins(),
           router: this.$router
         })
+      },
+      changePassword() {
+        this.newPassword = ''
+        this.$refs.passwordForm.open()
+        setTimeout(() => this.$refs.password.$el.focus(), 300)
+      },
+      savePassword() {
+        adminFetch({
+          url: '/api/admin/settings/password',
+          data: {password: this.newPassword},
+          handler: () => {
+            this.waitingForCreate = false
+            this.$refs.passwordForm.close()
+          },
+          router: this.$router
+        })
+        this.waitingForCreate = true
       }
     },
     components: {EmailSetting}
@@ -160,7 +195,7 @@
 .md-card
   width: 100%
 
-button.trash
+button.left-spaced
   margin-left: 20px
 
 .admin-row div
