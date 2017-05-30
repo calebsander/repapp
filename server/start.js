@@ -4,9 +4,9 @@
  */
 
 const app = require('./app')
-const database = require('./database')
+const {sequelize} = require('./database')
 
-database.sequelize.sync().then(function() {
+sequelize.sync().then(() => {
   app.listen(8000)
   console.log('Listening on port 8000')
 })

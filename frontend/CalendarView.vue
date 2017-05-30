@@ -61,18 +61,20 @@
       <md-dialog-title>Edit unavailability</md-dialog-title>
       <md-dialog-content>
         <md-checkbox v-model="unavailableForm.unavailable">Unavailable</md-checkbox>
-        <md-input-container>
-          <label>Reason</label>
-          <md-input v-model="unavailableForm.reason" :disabled="!unavailableForm.unavailable"></md-input>
-        </md-input-container>
-        <md-input-container>
-          <label>Tier</label>
-          <md-select required v-model="unavailableForm.tier" :disabled="!unavailableForm.unavailable">
-            <md-option v-for="tier in tiers" :value="tier.priority">
-              {{ tier.description }}
-            </md-option>
-          </md-select>
-        </md-input-container>
+        <div v-if="unavailableForm.unavailable">
+          <md-input-container>
+            <label>Reason</label>
+            <md-input v-model="unavailableForm.reason"></md-input>
+          </md-input-container>
+          <md-input-container>
+            <label>Tier</label>
+            <md-select required v-model="unavailableForm.tier">
+              <md-option v-for="tier in tiers" :value="tier.priority">
+                {{ tier.unavailabilityDescription }}
+              </md-option>
+            </md-select>
+          </md-input-container>
+        </div>
       </md-dialog-content>
       <md-dialog-actions>
         <md-spinner md-indeterminate v-show="unavailableForm.waitingForSubmit"></md-spinner>
@@ -340,13 +342,11 @@
         }
       },
       getTiers() {
-        setTimeout(() => { //will eventually be populated from a request
-          this.tiers = [
-            {priority: 0, description: 'Unavailable'},
-            {priority: 1, description: 'High'},
-            {priority: 2, description: 'Low'}
-          ]
-        }, 500)
+        adminFetch({
+          url: '/api/admin/tiers/unavailability',
+          handler: ({tiers}) => this.tiers = tiers,
+          router: this.$router
+        })
       },
       getUnavailableText({day, period}) {
         let unavailability
