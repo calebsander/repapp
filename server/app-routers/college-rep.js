@@ -2,7 +2,7 @@ const express = require('express')
 const db = require('../database')
 const linkRouter = require('./link')
 const linkUpdateRouter = require('./link-update')
-const unavailabilitiesRouter = require('./unavailabilities')
+const weekEventsRouter = require('../week-events')(false)
 
 const router = express.Router()
 router.use((req, res, next) => {
@@ -20,7 +20,7 @@ router.use((req, res, next) => {
 })
 
 router.use('/link', linkRouter)
-router.use('/unavailabilities', unavailabilitiesRouter)
+router.use('/events/:weekStart', weekEventsRouter)
 router.use('/update', linkUpdateRouter)
 
 module.exports = router
